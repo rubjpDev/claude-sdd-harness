@@ -1,4 +1,4 @@
-# rjp-harness — A Spec-Driven Agentic Harness for Claude Code
+# claude-sdd-harness — A Spec-Driven Agentic Harness for Claude Code
 
 > A small, opinionated orchestration layer that turns Claude Code into a
 > disciplined, multi-role software pipeline: **spec → human approval →
@@ -32,7 +32,7 @@
 
 ## What this is (and what it is not)
 
-`rjp-harness` is a **coordination layer that lives in its own directory**,
+`claude-sdd-harness` is a **coordination layer that lives in its own directory**,
 sitting beside the repositories it builds. You launch Claude Code from inside
 the harness directory; the main session takes on a single role — the
 **orchestrator** — and delegates real work to specialized subagents.
@@ -82,7 +82,7 @@ The harness is a **standalone repo**, a sibling of the repos it coordinates:
 
 ```
 ~/dev/
-├── rjp-harness/          ← this repo. You launch Claude Code from here.
+├── claude-sdd-harness/          ← this repo. You launch Claude Code from here.
 │   ├── .claude/
 │   │   ├── agents/
 │   │   │   ├── orchestrator.md
@@ -125,7 +125,7 @@ backend and frontend stay clean; all orchestration lives here.
 1. Clone this harness next to the repos it will drive:
    ```bash
    cd ~/dev
-   git clone <your-harness-repo> rjp-harness
+   git clone <your-harness-repo> claude-sdd-harness
    ```
 2. Edit **`repos.json`** to declare your repos: their `working_dir` (relative to
    the harness root, e.g. `../yata-backend`), stack, and `default_verify`
@@ -218,7 +218,7 @@ pending ──▶ spec_ready ──▶ [HUMAN APPROVAL] ──▶ in_progress �
 
 1. Open a terminal in the harness directory and launch Claude Code:
    ```bash
-   cd ~/dev/rjp-harness
+   cd ~/dev/claude-sdd-harness
    claude
    ```
    `CLAUDE.md` is auto-loaded and pins the session to the **orchestrator** role.
