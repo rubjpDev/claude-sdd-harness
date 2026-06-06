@@ -1,0 +1,24 @@
+{
+  "repos": [
+    {
+      "id": "backend",
+      "name": "yata-backend",
+      "role": "main-service",
+      "path": "../yata-backend",
+      "working_dir": "../yata-backend",
+      "primary_stack": ["Python 3.12", "FastAPI", "Pydantic v2", "SQLAlchemy", "Alembic", "PostgreSQL", "Redis", "Poetry", "pytest"],
+      "default_verify": ["poetry run ruff check .", "poetry run mypy app", "poetry run pytest -q"],
+      "notes": "Primary backend service and main implementation surface."
+    },
+    {
+      "id": "frontend",
+      "name": "yata-frontend",
+      "role": "client",
+      "path": "../yata-frontend",
+      "working_dir": "../yata-frontend",
+      "primary_stack": ["React", "Vite", "TypeScript", "Tailwind", "Zustand", "Plotly.js"],
+      "default_verify": ["npm run type-check", "npm run build"],
+      "notes": "React SPA. Consumes the typed client generated from the backend OpenAPI."
+    }
+  ]
+}

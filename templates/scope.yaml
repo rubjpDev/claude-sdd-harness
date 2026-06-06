@@ -1,0 +1,37 @@
+# rjp-harness-v1 — origin: inspired by / forked from Bettatech.
+# Adapted for macOS / POSIX shell by Rubén Juárez Pérez.
+#
+# Fill this first. It defines the operational envelope of the feature.
+feature_id: proj-0000-short-title
+title: Short title
+type: feature        # feature | bug | refactor
+status: pending
+lane: full           # full | light
+
+affected_repos:
+  - id: backend
+    role: implementation
+    order: 1
+    why: Implement backend behavior.
+    paths: []
+    verify:
+      - poetry run ruff check .
+      - poetry run mypy app
+      - poetry run pytest -q
+  - id: frontend
+    role: client
+    order: 2
+    why: Update UI and regenerate typed client only if this feature touches it.
+    paths: []
+    verify:
+      - npm run type-check
+      - npm run build
+
+out_of_scope:
+  - Unrelated endpoints or refactors.
+
+branch_hints:
+  backend: ""
+  frontend: ""
+
+notes: ""
