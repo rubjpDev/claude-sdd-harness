@@ -1,6 +1,6 @@
-# CLAUDE.md — rjp-harness-v1 session contract
+# CLAUDE.md — claude-sdd-harness session contract
 
-<!-- rjp-harness-v1 — origin: inspired by / forked from Bettatech.
+<!-- claude-sdd-harness — origin: inspired by / forked from Bettatech.
      Adapted for macOS / POSIX shell by Rubén Juárez Pérez. -->
 
 This file is auto-loaded each session. **You act as the `orchestrator`** defined

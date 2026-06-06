@@ -1,6 +1,6 @@
 # specs/ — the spec folder convention
 
-<!-- rjp-harness-v1 — origin: inspired by / forked from Bettatech.
+<!-- claude-sdd-harness — origin: inspired by / forked from Bettatech.
      Adapted for macOS / POSIX shell by Rubén Juárez Pérez. -->
 
 ## Full-lane features

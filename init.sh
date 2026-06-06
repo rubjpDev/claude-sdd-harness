@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# init.sh — rjp-harness-v1 verification gate
+# init.sh — claude-sdd-harness verification gate
 #
 # Origin: inspired by / forked from Bettatech.
 # Adapted for macOS / POSIX shell by Rubén Juárez Pérez.
@@ -23,7 +23,7 @@ fail() { printf '[FAIL] %s\n' "$1"; FAIL=1; }
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT" || { echo "[FAIL] cannot cd to harness root"; exit 1; }
 
-echo "== rjp-harness-v1 gate =="
+echo "== claude-sdd-harness gate =="
 
 # --- 1. Python >= 3.12 -------------------------------------------------------
 if command -v python3 >/dev/null 2>&1; then

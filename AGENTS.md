@@ -1,6 +1,6 @@
-# AGENTS.md — rjp-harness-v1 navigation map
+# AGENTS.md — claude-sdd-harness navigation map
 
-<!-- rjp-harness-v1 — origin: inspired by / forked from Bettatech.
+<!-- claude-sdd-harness — origin: inspired by / forked from Bettatech.
      Adapted for macOS / POSIX shell by Rubén Juárez Pérez. -->
 
 Runtime-agnostic map of how work flows through this harness.

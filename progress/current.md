@@ -10,7 +10,7 @@
 ## Bootstrap summary
 
 Spec-driven, role-based agentic harness installed as a standalone directory
-(`rjp-harness-v1`), living at the same level as the repos it coordinates.
+(`claude-sdd-harness`), living at the same level as the repos it coordinates.
 Four roles: `orchestrator`, `spec_creator`, `coder`, `validator`. Two lanes
 (light / full) with a human approval gate before full-lane implementation.
 Verification gate: `./init.sh`. Hooks in `.claude/settings.json` enforce it
