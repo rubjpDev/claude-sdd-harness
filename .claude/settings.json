@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && { command -v poetry >/dev/null 2>&1 && find . -name '*.py' -not -path './.git/*' -not -path './.*' | grep -q . && poetry run pytest -q 2>&1 | tail -5 || echo '[harness] pytest skipped (bootstrap: no source code or poetry not installed yet)'; }",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); [ \"$(echo \"$INPUT\" | jq -r '.stop_hook_active')\" = \"true\" ] && exit 0; cd \"$CLAUDE_PROJECT_DIR\" && ./init.sh > /tmp/rjp_harness_init.log 2>&1 && echo '[harness] init.sh OK' || (echo '[harness] init.sh FAILED — see /tmp/rjp_harness_init.log' && tail -20 /tmp/rjp_harness_init.log && exit 2)",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./init.sh)",
+      "Bash(poetry run pytest:*)",
+      "Bash(poetry run ruff:*)",
+      "Bash(poetry run mypy:*)",
+      "Bash(poetry run alembic:*)",
+      "Bash(docker compose:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

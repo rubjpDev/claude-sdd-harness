@@ -53,7 +53,7 @@ pending -> spec_ready -> [HUMAN APPROVAL] -> in_progress -> done
   - Full → spawn `spec_creator` → `spec_ready` → STOP, ask human.
 - **Spec approved** → `in_progress` → spawn `coder`.
 - **Coder `done`** → spawn `validator`.
-- **APPROVED** → `done`, append `progress/history.md`, clear `progress/active.json`.
+- **APPROVED** (validator has appended any durable findings to `docs/knowledge-pack.md`) → `done`, append `progress/history.md`, clear `progress/active.json`.
 - **CHANGES_REQUESTED** → spawn `coder` again with the review.
 - **Blocked** → `blocked`, record open question, ask human.
 
