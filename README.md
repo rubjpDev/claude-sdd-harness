@@ -452,9 +452,43 @@ itself is part of the story.
 
 ## Credits
 
-Origin: the role/hook/disk-as-memory pattern is inspired by / forked from
-**Bettatech**'s Claude Code subagent example. This version renames the roles
-(orchestrator / spec_creator / coder / validator), adds a full spec layer with
-EARS requirements, a two-lane calibration to control token cost, deterministic
-verification hooks, and a graceful bootstrap gate. Ported and adapted for
-macOS / POSIX shell and a Python/FastAPI + React stack by **Rubén Juárez Pérez**.
+The core pattern — four roles (orchestrator, spec_creator, coder, validator),
+spec-driven development with EARS requirements, the requirements/design/tasks
+spec files, the human approval gate, state-on-disk instead of in-chat, the
+`init.sh` verification gate, the one-feature-at-a-time rule, R→test
+traceability, `AGENTS.md`, `CHECKPOINTS.md`, and the PostToolUse + Stop
+verification hooks — is inherited from **Bettatech**'s Claude Code subagent
+example, which also seeded the per-feature boolean behind the light/full
+distinction.
+
+This version (v2), by **Rubén Juárez Pérez**, formalized the base's light/full
+distinction into a named two-lane system with acceptance criteria, and adds:
+
+- **Session cost-metrics system** — `metrics.sh` + `progress/metrics.jsonl` +
+  `--report`. Parses the session transcript, dedupes tokens by message id,
+  splits by model, splits cache writes by 5m/1h TTL for correct pricing, and
+  reports token + dollar cost per feature against an editable price table
+  (models missing from the table are flagged, never silently counted as `$0`).
+- **Per-agent model tiering** via `run.sh` — Opus for orchestrator,
+  spec_creator, and validator, Sonnet for the coder — deliberately without
+  setting `CLAUDE_CODE_SUBAGENT_MODEL`, so the tiering survives.
+- **Multi-repo coordination** — `repos.json` plus `scope.yaml`'s
+  `affected_repos` (per-repo role, order, verify command), with the harness
+  living in its own repo and no artifacts inside the target repos (the base
+  embedded its example app inside the harness).
+- **`scope.yaml`** as a fourth spec file — the operational envelope —
+  extending the base's three (`requirements.md`, `design.md`, `tasks.md`).
+- **A self-growing `docs/knowledge-pack.md`** — the validator appends durable
+  findings on APPROVED, and `spec_creator` reads it first.
+- **`progress/active.json`** — structured active-feature state, also used to
+  attribute metrics.
+- **Hardened hooks and a graceful bootstrap gate** — bootstrap-graceful
+  PostToolUse, a `stop_hook_active` infinite-loop guard, and a real-stack
+  `init.sh` check, on top of Bettatech's original hooks.
+- Renamed roles, MIT license, and expanded documentation.
+
+Ported to macOS / POSIX shell. The harness is stack-agnostic: the default
+`docs/` and `repos.json` target a Python/FastAPI + React example, but the
+pattern works for any language or framework — point `repos.json` at your
+repos, ask Claude to adapt `docs/` and the verify commands to your stack
+(Java/Spring, C++, Rust, whatever), and start working through features.
