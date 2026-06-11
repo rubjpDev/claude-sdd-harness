@@ -17,8 +17,8 @@ Verification gate: `./init.sh`. Hooks in `.claude/settings.json` enforce it
 on every edit and on session stop.
 
 The harness is project-agnostic. `repos.json` and `feature_list.json` are the
-project-specific configuration layer. Current config targets the YATA project
-(`yata-backend` + `yata-frontend`).
+project-specific configuration layer. The shipped config is a sample
+(`example-backend` + `example-frontend`) — point it at your own repos.
 
 Origin: inspired by / forked from Bettatech. Adapted for macOS / POSIX shell
 by Rubén Juárez Pérez.
