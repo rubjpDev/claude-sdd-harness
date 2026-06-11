@@ -24,5 +24,20 @@ disagreement.** When you find drift, fix the relevant doc.
 - Key ADRs: ...
 -->
 
----
 *This is a stub at bootstrap. Populate with real project facts.*
+
+---
+
+## Accumulated findings
+
+<!-- APPEND-ONLY, maintained by the `validator` after each APPROVED feature.
+     Each entry is a DURABLE, REUSABLE fact that saves a future session from
+     re-deriving it — a confirmed pattern, a non-obvious constraint, a gotcha,
+     a doc/source drift. NOT a changelog: feature-specific trivia, task lists,
+     and one-off details belong in progress/, not here. Newest at the bottom.
+     Keep entries to one or two lines. Promote recurring findings up into the
+     curated docs (architecture.md / conventions.md) and prune the entry here. -->
+
+<!-- Format: - **<feature-id>** (YYYY-MM-DD): <durable finding>. -->
+
+*No findings yet — the validator appends here as features are approved.*

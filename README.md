@@ -180,6 +180,8 @@ feature `done` — it hands control back.
 the docs. Runs `./init.sh` (must be green). Produces `progress/review_<id>.md`
 with a requirement-coverage table and a checkpoint walk. Emits **APPROVED** or
 **CHANGES_REQUESTED**. Never edits code — it cites `file:line` and sends it back.
+On APPROVED, it also appends any durable findings to `docs/knowledge-pack.md`, so
+the pack the `spec_creator` reads first keeps growing instead of going stale.
 
 ---
 
@@ -269,7 +271,8 @@ Feature: **"User can log a session"** (full lane).
 8. **orchestrator:** spawns **validator**.
 9. **validator:** checks files against `CHECKPOINTS.md`, runs `./init.sh`
    (green), confirms every `R` has a test. Writes
-   `progress/review_0003-session-logging.md`, verdict **APPROVED**.
+   `progress/review_0003-session-logging.md`, verdict **APPROVED**, and appends
+   any durable finding to `docs/knowledge-pack.md`.
 10. **orchestrator:** marks the feature `done`, appends a summary to
     `progress/history.md`, clears `progress/active.json`. Tells you it's done.
 
@@ -439,8 +442,6 @@ This harness is intentionally small so it can evolve. Ideas for later versions:
   dedicated role with a knowledge-pack-writing mandate is a natural v2).
 - **Per-feature branch automation** in `scope.yaml` (`branch_hints` is already
   a field — wire it to actual git operations).
-- **A `docs/knowledge-pack.md` that grows automatically** — have the validator
-  append durable findings after each APPROVED feature.
 - **Multi-language verify** — `repos.json` already supports per-repo verify
   commands; `init.sh` could run each repo's own gate.
 
