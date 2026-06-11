@@ -100,8 +100,8 @@ The harness is a **standalone repo**, a sibling of the repos it coordinates:
 │   ├── docs/               ← architecture, conventions, verification, knowledge-pack
 │   ├── specs/              ← one folder per full-lane feature (the source of truth)
 │   └── progress/           ← active.json, current.md, history.md, impl_*, review_*
-├── yata-backend/          ← a repo the harness builds (no harness files inside)
-└── yata-frontend/         ← another repo the harness builds
+├── example-backend/       ← a repo the harness builds (no harness files inside)
+└── example-frontend/      ← another repo the harness builds
 ```
 
 Key rule: **no harness artifacts ever go inside the repos being built.** The
@@ -128,7 +128,7 @@ backend and frontend stay clean; all orchestration lives here.
    git clone <your-harness-repo> claude-sdd-harness
    ```
 2. Edit **`repos.json`** to declare your repos: their `working_dir` (relative to
-   the harness root, e.g. `../yata-backend`), stack, and `default_verify`
+   the harness root, e.g. `../example-backend`), stack, and `default_verify`
    commands. The `main-service` role marks the primary repo.
 3. Fill in **`docs/`** with your project's reality:
    - `architecture.md` — what "good work" means here (layering, patterns).
@@ -238,7 +238,7 @@ pending ──▶ spec_ready ──▶ [HUMAN APPROVAL] ──▶ in_progress �
    the spec. Nothing gets implemented until you say yes.
 
 5. You can also invoke a subagent explicitly, e.g.:
-   > "Use the validator subagent on feature yata-0007."
+   > "Use the validator subagent on feature 0007."
 
 The anti-broken-telephone rule means the orchestrator will summarize what each
 subagent wrote to disk in a few lines — it won't dump diffs or full specs into
@@ -253,22 +253,22 @@ Feature: **"User can log a training session"** (full lane).
 1. **You:** "Implement session logging — full lane." 
 2. **orchestrator:** runs `./init.sh` (green), creates the feature in
    `feature_list.json` as `pending`, spawns **spec_creator**.
-3. **spec_creator:** writes `specs/yata-0003-session-logging/` →
+3. **spec_creator:** writes `specs/0003-session-logging/` →
    `scope.yaml` (backend only, order 1, verify = ruff+mypy+pytest),
-   `requirements.md` (`R1: The system SHALL persist a session with date and
-   per-set RPE or RIR…`), `design.md`, `tasks.md` (`T1 → R1, R2`). Returns
-   `spec_ready -> specs/yata-0003-session-logging/`.
+   `requirements.md` (`R1: The system SHALL persist a session with a timestamp
+   and its line items…`), `design.md`, `tasks.md` (`T1 → R1, R2`). Returns
+   `spec_ready -> specs/0003-session-logging/`.
 4. **orchestrator:** STOPS. Summarizes the spec and asks you to approve.
 5. **You:** "Approved."
 6. **orchestrator:** sets the feature `in_progress`, spawns **coder**.
 7. **coder:** implements the endpoint + Pydantic schemas + SQLAlchemy model +
    Alembic migration + pytest tests. Runs `./init.sh` (green). Writes
-   `progress/impl_yata-0003-session-logging.md` with a requirement→test map.
+   `progress/impl_0003-session-logging.md` with a requirement→test map.
    Returns `done -> progress/impl_…md`.
 8. **orchestrator:** spawns **validator**.
 9. **validator:** checks files against `CHECKPOINTS.md`, runs `./init.sh`
    (green), confirms every `R` has a test. Writes
-   `progress/review_yata-0003-session-logging.md`, verdict **APPROVED**.
+   `progress/review_0003-session-logging.md`, verdict **APPROVED**.
 10. **orchestrator:** marks the feature `done`, appends a summary to
     `progress/history.md`, clears `progress/active.json`. Tells you it's done.
 

@@ -17,12 +17,14 @@ Runtime: **macOS / Linux, bash or zsh. POSIX shell only.**
 
 ## Repository map
 
-Declared in `repos.json`. Configure it per project. Default YATA setup:
+Declared in `repos.json`. Configure it per project. The shipped `repos.json` is
+a sample (`example-backend` + `example-frontend`) — replace it with your own
+repos. Example shape:
 
 | id | repo | role | stack |
 |---|---|---|---|
-| `backend` | yata-backend | main-service | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy, Alembic, PostgreSQL, Redis, Poetry, pytest |
-| `frontend` | yata-frontend | client | React, Vite, TypeScript, Tailwind, Zustand, Plotly.js |
+| `backend` | example-backend | main-service | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy, Alembic, PostgreSQL, Redis, Poetry, pytest |
+| `frontend` | example-frontend | client | React, Vite, TypeScript, Tailwind |
 
 The harness lives in its own directory and coordinates repos from here. **No
 harness artifacts inside the repos being developed.**

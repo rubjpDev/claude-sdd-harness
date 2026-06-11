@@ -1,6 +1,6 @@
 {
-  "project": "yata",
-  "description": "YATA — powerlifting training analysis platform. Spec-driven agentic development.",
+  "project": "your-project",
+  "description": "One-line description of your project. Spec-driven agentic development.",
   "rules": {
     "one_feature_at_a_time": true,
     "require_tests_to_close": true,
