@@ -23,6 +23,7 @@
 - [Running it with Claude Code](#running-it-with-claude-code)
 - [A worked example, end to end](#a-worked-example-end-to-end)
 - [The verification gate (`init.sh`) and hooks](#the-verification-gate-initsh-and-hooks)
+- [Session cost metrics](#session-cost-metrics)
 - [File-by-file reference](#file-by-file-reference)
 - [Troubleshooting](#troubleshooting)
 - [Extending it (v2, v3, …)](#extending-it-v2-v3-)
@@ -231,7 +232,7 @@ pending ──▶ spec_ready ──▶ [HUMAN APPROVAL] ──▶ in_progress �
    > This is trivial — light lane."
 
 4. **Full lane** example prompt:
-   > "Implement the free-tier training analyst (Phase 2). This is substantial —
+   > "Implement user authentication with email + password. This is substantial —
    > full lane."
    The orchestrator spawns `spec_creator`, which writes `specs/<id>/` and
    returns `spec_ready`. The orchestrator then **stops and asks you to approve**
@@ -248,7 +249,7 @@ the chat. Read the files in `specs/` and `progress/` for the detail.
 
 ## A worked example, end to end
 
-Feature: **"User can log a training session"** (full lane).
+Feature: **"User can log a session"** (full lane).
 
 1. **You:** "Implement session logging — full lane." 
 2. **orchestrator:** runs `./init.sh` (green), creates the feature in
@@ -297,10 +298,80 @@ harness runs them, not the agent:
 - **Stop**: before the session can end, runs `./init.sh`. If it fails, the hook
   exits non-zero and **forces the session to keep working** until it's green.
   A `stop_hook_active` guard prevents an infinite loop.
+- **SessionEnd**: runs `./metrics.sh`, which parses the session transcript and
+  appends one row to `progress/metrics.jsonl` — tokens (deduped by message id,
+  broken down per model), turn count, and wall-clock latency, attributed to the
+  feature active in `progress/active.json`. It is best-effort and never blocks.
+
+See [Session cost metrics](#session-cost-metrics) for the format and the report
+command.
 
 Unlike instructions in `CLAUDE.md` (advisory, and ignorable in a long session),
 hooks are **deterministic** — they run every time, no matter what the model
 "decides".
+
+---
+
+## Session cost metrics
+
+The harness measures what each session actually cost. On **SessionEnd**, the
+`metrics.sh` hook reads the session transcript and appends one JSON line to
+`progress/metrics.jsonl`:
+
+```json
+{
+  "logged_at": "2026-06-11T07:57:18Z",
+  "session_id": "ebd84cc7-…",
+  "feature_id": "0003-session-logging",
+  "status": "in_progress",
+  "duration_seconds": 208,
+  "turns": 5,
+  "tokens": {
+    "input": 7, "output": 938, "cache_read": 90959,
+    "cache_creation": 8885, "cache_creation_5m": 0, "cache_creation_1h": 8885
+  },
+  "by_model": {
+    "claude-opus-4-8":   { "turns": 2, "input": 4, "output": 600, "cache_read": 70918, "cache_creation": 6477, "cache_creation_5m": 0, "cache_creation_1h": 6477 },
+    "claude-sonnet-4-6": { "turns": 3, "input": 3, "output": 338, "cache_read": 20041, "cache_creation": 2408, "cache_creation_5m": 0, "cache_creation_1h": 2408 }
+  }
+}
+```
+
+- **Token counts are deduped by message id** — a single turn with multiple
+  content blocks (text + tool calls) is logged on several transcript lines that
+  share one `usage`, so a naive sum would double-count. `metrics.sh` keeps each
+  message once.
+- **`by_model`** splits tokens by model, which is where the real cost lives:
+  Opus turns (orchestration, spec, review) cost several times more per token than
+  Sonnet turns (implementation). The split makes the model-tiering trade-off
+  visible, and lets `--report` price each model correctly.
+- **Cache writes are split by TTL** (`cache_creation_5m` / `cache_creation_1h`),
+  because a 1-hour cache write costs 2× the input rate and a 5-minute write 1.25×
+  — pricing them with one blended number would be wrong.
+- **`feature_id`** is read from `progress/active.json` at session end, attributing
+  cost to the feature in flight.
+
+To see the accumulated token **and dollar** cost grouped by feature:
+
+```bash
+./metrics.sh --report
+```
+
+```
+== cost per feature (from metrics.jsonl) ==
+feature               sessions  turns  input  output  cache_read  cache_creation  duration_s  cost_usd
+0003-session-logging  2         7      1671   1694    111000      17320           241         0.22
+none                  1         5      7      938     90959       8885            208         0.09
+```
+
+The dollar figure comes from a `PRICES_JSON` table at the top of `metrics.sh`
+(USD per 1M tokens, per model, with input / output / cache-read / cache-write-5m
+/ cache-write-1h columns) — **edit it to match the models you run and current
+list prices**. A model seen in the data but missing from the table is counted as
+`$0` and flagged in a `note:` line so the cost is never silently wrong.
+
+`metrics.jsonl` is append-only and committable — a durable cost trail alongside
+`progress/history.md`. Requires `jq`.
 
 ---
 
@@ -319,6 +390,7 @@ hooks are **deterministic** — they run every time, no matter what the model
 | `repos.json` | The repos this harness drives + their verify commands. |
 | `feature_list.json` | Feature index and state (`pending`/`in_progress`/`done`/`blocked`). |
 | `init.sh` | The verification gate. |
+| `metrics.sh` | SessionEnd cost meter + `--report` aggregator. |
 | `templates/` | Skeletons the spec_creator fills (`scope.yaml`, `requirements.md`, `design.md`, `tasks.md`). |
 | `docs/` | `architecture.md`, `conventions.md`, `verification.md`, `knowledge-pack.md`. |
 | `specs/<id>/` | The four spec files for a full-lane feature — the source of truth. |
@@ -327,6 +399,7 @@ hooks are **deterministic** — they run every time, no matter what the model
 | `progress/history.md` | Append-only log of closed features. |
 | `progress/impl_<id>.md` | The coder's implementation report. |
 | `progress/review_<id>.md` | The validator's verdict and coverage tables. |
+| `progress/metrics.jsonl` | Append-only per-session cost log (tokens, latency, by-model). |
 
 ---
 
@@ -366,8 +439,6 @@ This harness is intentionally small so it can evolve. Ideas for later versions:
   dedicated role with a knowledge-pack-writing mandate is a natural v2).
 - **Per-feature branch automation** in `scope.yaml` (`branch_hints` is already
   a field — wire it to actual git operations).
-- **A metrics hook** that logs tokens/latency per session to a file, so you can
-  see the real cost of each feature.
 - **A `docs/knowledge-pack.md` that grows automatically** — have the validator
   append durable findings after each APPROVED feature.
 - **Multi-language verify** — `repos.json` already supports per-repo verify

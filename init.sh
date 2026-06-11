@@ -134,10 +134,10 @@ else
 
   cd "$GATE_DIR" || { fail "cannot cd to $GATE_DIR"; cd "$ROOT"; }
 
-  if poetry run ruff check . >/tmp/rjp_ruff.log 2>&1; then
+  if poetry run ruff check . >/tmp/harness_ruff.log 2>&1; then
     ok "ruff check clean"
   else
-    fail "ruff check found issues (see /tmp/rjp_ruff.log)"; tail -10 /tmp/rjp_ruff.log
+    fail "ruff check found issues (see /tmp/harness_ruff.log)"; tail -10 /tmp/harness_ruff.log
   fi
 
   # mypy — only if an app/src dir exists in the gate dir
@@ -146,20 +146,20 @@ else
     [ -d "$d" ] && { MYPY_TARGET="$d"; break; }
   done
   if [ -n "$MYPY_TARGET" ]; then
-    if poetry run mypy "$MYPY_TARGET" >/tmp/rjp_mypy.log 2>&1; then
+    if poetry run mypy "$MYPY_TARGET" >/tmp/harness_mypy.log 2>&1; then
       ok "mypy clean"
     else
-      fail "mypy found issues (see /tmp/rjp_mypy.log)"; tail -10 /tmp/rjp_mypy.log
+      fail "mypy found issues (see /tmp/harness_mypy.log)"; tail -10 /tmp/harness_mypy.log
     fi
   else
     warn "no app/ or src/ dir found — skipping mypy"
   fi
 
   if [ "$HAS_TESTS" -eq 1 ]; then
-    if poetry run pytest -q >/tmp/rjp_pytest.log 2>&1; then
+    if poetry run pytest -q >/tmp/harness_pytest.log 2>&1; then
       ok "pytest green"
     else
-      fail "pytest failed (see /tmp/rjp_pytest.log)"; tail -15 /tmp/rjp_pytest.log
+      fail "pytest failed (see /tmp/harness_pytest.log)"; tail -15 /tmp/harness_pytest.log
     fi
   else
     warn "no tests found — skipping pytest"
