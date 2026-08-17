@@ -27,9 +27,11 @@ METRICS_FILE="$ROOT/progress/metrics.jsonl"
 #   w5  = cache write 5m TTL (1.25x input)        w1 = cache write 1h TTL (2x input)
 # Models absent from this table are reported with cost 0 and flagged as UNPRICED.
 PRICES_JSON='{
+  "claude-opus-5":     { "in": 5,  "out": 25, "r": 0.5,  "w5": 6.25, "w1": 10 },
   "claude-opus-4-8":   { "in": 5,  "out": 25, "r": 0.5,  "w5": 6.25, "w1": 10 },
   "claude-opus-4-7":   { "in": 5,  "out": 25, "r": 0.5,  "w5": 6.25, "w1": 10 },
   "claude-opus-4-6":   { "in": 5,  "out": 25, "r": 0.5,  "w5": 6.25, "w1": 10 },
+  "claude-sonnet-5":   { "in": 3,  "out": 15, "r": 0.3,  "w5": 3.75, "w1": 6  },
   "claude-sonnet-4-6": { "in": 3,  "out": 15, "r": 0.3,  "w5": 3.75, "w1": 6  },
   "claude-haiku-4-5":  { "in": 1,  "out": 5,  "r": 0.1,  "w5": 1.25, "w1": 2  }
 }'
