@@ -4,7 +4,7 @@ All notable changes to this harness. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are the
 repository tags (`V_1.0`, `V_2.0`, …).
 
-## [Unreleased] — v3.1
+## [V_3.1] — incident agent - 2026-08-17
 
 ### Added
 
@@ -76,7 +76,7 @@ repository tags (`V_1.0`, `V_2.0`, …).
 
 ---
 
-## [V_3.0] — v3-extended
+## [V_3.0] — v3-extended - 2026-08-17
 
 Branch: `feature/version3-extended`.
 
