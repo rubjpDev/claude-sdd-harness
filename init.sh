@@ -82,6 +82,33 @@ if [ -f feature_list.json ]; then
   fi
 fi
 
+# --- 4b. arch-map staleness (WARN only) --------------------------------------
+# docs/arch-map.json is a generated view. It carries the commit it was built
+# from, per repo; warn when HEAD has drifted well past it so it doesn't rot
+# silently. Regenerate with the arch-map skill (/arch-map).
+ARCH_MAP_MAX_COMMITS=20
+if [ -f docs/arch-map.json ] && command -v jq >/dev/null 2>&1; then
+  if ! jq empty docs/arch-map.json >/dev/null 2>&1; then
+    fail "docs/arch-map.json does not parse"
+  else
+    while IFS="	" read -r rid sha; do
+      [ -z "$rid" ] && continue
+      rpath="$ROOT/$(jq -r --arg id "$rid" '.repos[]? | select(.id == $id) | .working_dir' repos.json 2>/dev/null)"
+      [ -d "$rpath/.git" ] || continue
+      if ! git -C "$rpath" cat-file -e "${sha}^{commit}" 2>/dev/null; then
+        warn "arch-map: commit ${sha} unknown in ${rid} — map needs a full rebuild (/arch-map)"
+        continue
+      fi
+      behind="$(git -C "$rpath" rev-list --count "${sha}..HEAD" 2>/dev/null || echo 0)"
+      if [ "${behind:-0}" -gt "$ARCH_MAP_MAX_COMMITS" ]; then
+        warn "arch-map: ${rid} is ${behind} commits past the mapped state — re-run /arch-map"
+      else
+        ok "arch-map: ${rid} current (${behind} commits behind HEAD)"
+      fi
+    done < <(jq -r '.generated_at_commit // {} | to_entries[] | "\(.key)\t\(.value)"' docs/arch-map.json 2>/dev/null)
+  fi
+fi
+
 # --- 5. Detect source code in declared repo paths ----------------------------
 # Read backend paths from repos.json; fall back to harness root.
 PY_SOURCE_DIRS=""

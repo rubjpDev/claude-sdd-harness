@@ -12,6 +12,11 @@ disagreement.** When you find drift, fix the relevant doc.
 - [`architecture.md`](architecture.md) — layering, boundaries, key separations.
 - [`conventions.md`](conventions.md) — formatting, naming, error handling, schemas, migrations, tests, complexity.
 - [`verification.md`](verification.md) — `./init.sh`, quality gates, coverage, local stack.
+- [`arch-map.json`](arch-map.json) — generated map of the code: `{nodes, edges, flows}`.
+  Regenerate with the `arch-map` skill (`/arch-map`); the human-readable twin is
+  [`generated/architecture.html`](generated/architecture.html). A generated **view**:
+  it carries the commit SHA it was built from, so if `HEAD` moved past it, treat it
+  as a lead and verify against source. Never paste it into this file.
 
 ## Project facts
 

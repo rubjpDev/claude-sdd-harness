@@ -89,7 +89,9 @@ The harness is a **standalone repo**, a sibling of the repos it coordinates:
 │   │   │   ├── orchestrator.md
 │   │   │   ├── spec_creator.md
 │   │   │   ├── coder.md
+│   │   │   ├── tutor.md    ← optional: teaches instead of coding
 │   │   │   └── validator.md
+│   │   ├── skills/         ← vendored skills (ponytail, no-ai-slop, bro, arch-map)
 │   │   └── settings.json   ← hooks + permissions
 │   ├── CLAUDE.md           ← auto-loaded; pins the session to "orchestrator"
 │   ├── AGENTS.md           ← navigation map / hard rules
@@ -146,7 +148,7 @@ That's it. There is nothing to compile or install — the "engine" is Claude Cod
 
 ---
 
-## The four roles
+## The roles
 
 Each role is a Claude Code subagent defined in `.claude/agents/*.md` (YAML
 frontmatter + system prompt). The orchestrator spawns the others with the
@@ -157,6 +159,7 @@ frontmatter + system prompt). The orchestrator spawns the others with the
 | **orchestrator** | the main session (pinned by `CLAUDE.md`) | ❌ | ❌ | — |
 | **spec_creator** | `Task` → spec_creator | ❌ (writes specs only) | ❌ | `spec_ready -> specs/<id>/` |
 | **coder** | `Task` → coder | ✅ | ❌ (hands back) | `done -> progress/impl_<id>.md` |
+| **tutor** *(tutor mode)* | `Task` → tutor | ❌ (the human writes it) | ❌ | `tutorial -> progress/tutorial_<id>.md` |
 | **validator** | `Task` → validator | ❌ | ✅ (APPROVED closes) | `APPROVED -> progress/review_<id>.md` |
 
 **orchestrator** — Reads state, picks the lane, delegates, holds the human
@@ -385,7 +388,14 @@ list prices**. A model seen in the data but missing from the table is counted as
 | `.claude/agents/orchestrator.md` | Coordinator role (the pinned main session). |
 | `.claude/agents/spec_creator.md` | Writes `specs/<id>/` for full-lane features. |
 | `.claude/agents/coder.md` | Implements one feature with tests. |
+| `.claude/agents/tutor.md` | Tutor mode: teaches one feature so the human implements it. |
 | `.claude/agents/validator.md` | Reviews and emits APPROVED / CHANGES_REQUESTED. |
+| `.claude/skills/` | Vendored skills, usable without installing plugins — see its README. |
+| `CHANGELOG.md` | What changed in each version, and why. |
+| `templates/brief.md` | Skeleton for the human-facing spec summary. |
+| `templates/walkthrough.md` | Skeleton for the human-facing change walkthrough. |
+| `docs/arch-map.json` | Generated `{nodes, edges, flows}` map of the code, for agents. |
+| `docs/generated/architecture.html` | Generated interactive architecture diagram, for humans. |
 | `.claude/settings.json` | PostToolUse + Stop hooks; permission allow-list. |
 | `CLAUDE.md` | Auto-loaded session contract; pins the orchestrator role. |
 | `AGENTS.md` | Navigation map, hard rules, standard flow. |
@@ -464,14 +474,14 @@ distinction.
 This version (v2), by **Rubén Juárez Pérez**, formalized the base's light/full
 distinction into a named two-lane system with acceptance criteria, and adds:
 
+- **Per-agent model tiering** via `run.sh` — heavy reasoning on Opus, mechanical
+  implementation on Sonnet, deliberately without setting
+  `CLAUDE_CODE_SUBAGENT_MODEL`, so the tiering survives.
 - **Session cost-metrics system** — `metrics.sh` + `progress/metrics.jsonl` +
   `--report`. Parses the session transcript, dedupes tokens by message id,
   splits by model, splits cache writes by 5m/1h TTL for correct pricing, and
   reports token + dollar cost per feature against an editable price table
   (models missing from the table are flagged, never silently counted as `$0`).
-- **Per-agent model tiering** via `run.sh` — Opus for orchestrator,
-  spec_creator, and validator, Sonnet for the coder — deliberately without
-  setting `CLAUDE_CODE_SUBAGENT_MODEL`, so the tiering survives.
 - **Multi-repo coordination** — `repos.json` plus `scope.yaml`'s
   `affected_repos` (per-repo role, order, verify command), with the harness
   living in its own repo and no artifacts inside the target repos (the base
@@ -486,6 +496,38 @@ distinction into a named two-lane system with acceptance criteria, and adds:
   PostToolUse, a `stop_hook_active` infinite-loop guard, and a real-stack
   `init.sh` check, on top of Bettatech's original hooks.
 - Renamed roles, MIT license, and expanded documentation.
+
+### v3-extended
+
+Built on v2, same author. See `CHANGELOG.md` for the full entry.
+
+- **Retuned model tiering** — Claude 5 model ids pinned in `run.sh` and the agent
+  frontmatter; orchestrator drops to medium effort and the `validator` moves to
+  Sonnet 5, keeping Opus for orchestration, spec authoring and teaching.
+- **Human-facing spec summaries** — every full-lane feature also gets
+  `specs/<id>/brief.md` (by the `spec_creator`, before the approval gate: ~1
+  screen, Mermaid diagram, `no-ai-slop` styling) and `specs/<id>/walkthrough.md`
+  (by the `validator`, after the review: real snippets from the diff explained in
+  `bro` plain language, like a PR walkthrough). The long spec files stay for the
+  coder; the human reads these two.
+- **Bundled skills** — `ponytail`, `ponytail-audit`, `ponytail-review`,
+  `no-ai-slop`, `bro` and `arch-map` ship inside `.claude/skills/`, so the harness
+  works with no plugin install. `ponytail` is **on by default** for `spec_creator`
+  and `coder`.
+- **`/arch-map`** — maps the declared repos into `docs/arch-map.json` (for agents:
+  the `spec_creator` reads it instead of re-exploring the tree) and
+  `docs/generated/architecture.html` (for humans: interactive diagram, flow panel,
+  tooltips, self-contained single file — plus a per-node **"what it does / how it's
+  built"** panel and **step-through** flows, so the diagram is something you can
+  discuss, not just look at). The plain-language half is written with `no-ai-slop`;
+  the prose lives only in the HTML, never in the JSON agents load. Both are committed and **updated
+  incrementally** from the commit SHA stored in the JSON — a re-run after three
+  commits edits three nodes, it doesn't rebuild the map. `init.sh` warns when the
+  map drifts more than 20 commits behind.
+- **Tutor mode** — a feature marked `"mode": "tutor"` in `feature_list.json` is
+  delivered by the `tutor` instead of the `coder`: it writes
+  `progress/tutorial_<id>.md`, the human writes the code, and the `validator`
+  runs unchanged. Learning path, same gates.
 
 Ported to macOS / POSIX shell. The harness is stack-agnostic: the default
 `docs/` and `repos.json` target a Python/FastAPI + React example, but the
