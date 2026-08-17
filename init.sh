@@ -71,7 +71,8 @@ if [ -f feature_list.json ]; then
       fail "more than one feature in_progress (found ${INPROG})"
     fi
 
-    BADSTATUS="$(jq -r '[.features[]? | select(.status as $s | (["pending","in_progress","done","blocked"] | index($s)) | not) | .id] | join(", ")' feature_list.json)"
+    # The vocabulary lives in feature_list.json (rules.valid_status) — one copy only.
+    BADSTATUS="$(jq -r '(.rules.valid_status // ["pending","in_progress","done","blocked"]) as $valid | [.features[]? | select(.status as $s | ($valid | index($s)) | not) | .id] | join(", ")' feature_list.json)"
     if [ -z "$BADSTATUS" ]; then
       ok "all feature statuses valid"
     else

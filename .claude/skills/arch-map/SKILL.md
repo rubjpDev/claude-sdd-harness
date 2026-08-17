@@ -47,6 +47,35 @@ Granularity: a node is something a person would name in a whiteboard sketch — 
 module, a service, a table group, an external API. Not one node per file. If the
 map has more than ~40 nodes you went too fine; collapse.
 
+### Infrastructure is part of the architecture
+
+The map is not only application modules. Include the runtime the code lives in,
+because half of "why is this broken" lives there:
+
+- **Datastores** as logical units — a database, a cache, a queue, a bucket. One node
+  per database or per cluster, **never one per table.** Table-level detail rots in a
+  week and nobody reads it; the schema is the source of truth for that.
+- **Compute** — services, k8s deployments and the cluster or namespace they sit in,
+  serverless functions, cron jobs, workers.
+- **Edges of the system** — external APIs, identity providers, payment providers,
+  webhooks in and out.
+- **Environments** only when they differ structurally. Three copies of the same
+  topology labelled dev/stage/prod is noise; a prod-only replica or queue is not.
+
+Source it from what is **declared**, in this order: `repos.json`, `docker-compose*`,
+k8s manifests and Helm values, Terraform or Pulumi, CI workflows, the env-var
+schema, `alembic.ini` / ORM config. Declared config beats anything you infer.
+
+If the project grants you a read-only connector (a database MCP tool, a k8s tool),
+use it only to **confirm what exists and what it's connected to** — the list of
+databases or schemas, the deployments in a namespace. Do not enumerate tables, do
+not read rows: this is a topology map, not a data dictionary.
+
+**Never put a secret in either artifact.** No connection strings, hostnames with
+credentials, tokens, bucket URLs with keys, internal IPs. Logical names only
+(`db.primary`, `cache.sessions`, `cluster.eu-west-1/prod`). Both files are
+committed; the HTML is a file you may well send to someone.
+
 ## `docs/arch-map.json`
 
 ```json
@@ -70,7 +99,7 @@ map has more than ~40 nodes you went too fine; collapse.
 
 Rules: `id` is a stable dotted slug — **never renumber or rename an existing id**,
 agents and the HTML both key off it. `kind` is free-form but consistent
-(`module`, `store`, `external`, `job`, `ui`). `steps` are node ids in order, and
+(`module`, `store`, `cache`, `queue`, `service`, `cluster`, `external`, `job`, `ui`). `steps` are node ids in order, and
 every step id must exist in `nodes`. `desc` is one line, always — this file is
 read into an agent's context, so every extra line is a token tax on every spawn.
 Keep keys sorted and formatting stable so diffs stay small.

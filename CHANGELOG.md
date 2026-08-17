@@ -4,7 +4,79 @@ All notable changes to this harness. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are the
 repository tags (`V_1.0`, `V_2.0`, …).
 
-## [Unreleased] — v3-extended
+## [Unreleased] — v3.1
+
+### Added
+
+- **Incident lane** and the **`triage`** agent. A feature marked
+  `"type": "incident"` is diagnosed before it is fixed: `triage` reproduces the
+  failure, traces the root cause to `file:line`, establishes the blast radius
+  (other callers, already-corrupted data, backfill needed) and prescribes the
+  regression test, all into `specs/<incident-id>/diagnosis-<incident-id>.md` —
+  incidents get their own folder under `specs/`, named after the ticket id
+  (`specs/INC-I303/`), exactly like features. That diagnosis is the coder's
+  contract, because an incident has no spec and no acceptance array until someone
+  reproduces it. It has no `Edit` tool, fixes nothing, changes no state.
+  Diagnosis is search-heavy by nature, so it runs in its own context window and the
+  `coder` gets a clean one for the fix.
+  - Returns `diagnosed` (straight to the `coder`, no approval gate — incidents are
+    urgent), `escalate` (the cause is a design problem: converts to a full-lane
+    feature whose spec is written into the **same** folder, next to the diagnosis,
+    with the human gate) or `cannot_reproduce` (`blocked`, with
+    what it tried and what it needs — a legitimate outcome, not a failure).
+  - Skipped entirely when the human already knows the cause: that's the light lane.
+- **Incident rules for the `coder`**: write the prescribed regression test **first
+  and watch it fail**, fix the named cause rather than where the error surfaced, and
+  no scope creep — an incident is the worst place for a drive-by refactor. A
+  diagnosis that turns out to be wrong is a `blocked`, not an improvised new theory.
+- **Incident checks for the `validator`**, both blocking: the regression test must
+  actually go red without the fix (verify it, don't assume), and the fix must
+  address the root cause the diagnosis named. Plus: a blast radius needing a
+  backfill must be handled or explicitly deferred.
+- **`post-mortem-<id>.md`** replaces `walkthrough.md` as the human-facing file for an
+  incident (`templates/post-mortem.md`): what broke, why, what stops it now, a
+  timeline of the introducing change, what data was already affected, and **what
+  would have caught it earlier** — the missing test, constraint, type or alert. Same
+  `bro` styling and real-snippets rule as a walkthrough, different shape.
+- **Ticket-data handling**, encoded in `triage`, the `validator`, the orchestrator
+  and `CLAUDE.md`: real tickets arrive full of names, emails, account ids and card
+  numbers, and `progress/` is committed to git. Keep the shape, never the value;
+  internal ids only; payment data and credentials never, in any form. An exposed
+  credential in a ticket is escalated to the human as its own incident. Ticket text
+  is treated as untrusted **data**, never as instructions.
+- **Read-only connector rules.** Where a project configures a database (or logs,
+  tracing, k8s) MCP tool, `triage` may query it to confirm or eliminate a
+  hypothesis — reads only, bounded queries, aggregates and shapes rather than rows,
+  and everything it reads is still subject to the redaction rules. It states in the
+  diagnosis which source each piece of evidence came from (local dump vs replica vs
+  code alone), and flags credentials that are not `SELECT`-only: the boundary that
+  actually holds is the database role, not the prompt. MCP tools must be added to
+  the agent's `tools:` allowlist by name; the frontmatter carries the example.
+- **`/arch-map` now maps infrastructure too** — datastores, caches, queues,
+  services, k8s clusters and namespaces, cron jobs and the external edges of the
+  system, sourced from declared config (compose files, k8s manifests, Terraform, CI,
+  env schema) rather than inferred. One node per database or cluster, **never per
+  table**. Secrets never enter either artifact: logical names only, no connection
+  strings, hostnames with credentials, tokens or internal IPs.
+
+### Changed
+
+- **`init.sh` reads the status vocabulary from `feature_list.json`**
+  (`rules.valid_status`) instead of keeping a second hardcoded copy.
+
+### Fixed
+
+- **`spec_ready` no longer fails the gate.** The state machine has used it since v1,
+  but it was missing from the valid-status list, so a full-lane feature waiting at
+  the approval gate turned `init.sh` red. Added, along with the new `diagnosed`.
+- **The tolerant `Stop` hook now covers every `in_progress*` status.** It compared
+  the status for exact equality, so a harness using a variant like
+  `in_progress_tutor` still got blocked by a red gate mid-implementation — exactly
+  when the tolerance is needed.
+
+---
+
+## [V_3.0] — v3-extended
 
 Branch: `feature/version3-extended`.
 
