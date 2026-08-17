@@ -11,8 +11,9 @@ Runtime: **macOS / Linux, bash or zsh. POSIX shell only.**
 ## Hard rules
 
 - **Do not edit source or test directories directly.** Delegate all code and
-  test work to the `coder` subagent (via the `Task` tool). Reviews go to
-  `validator`; specs go to `spec_creator`.
+  test work to the `coder` subagent (via the `Task` tool) — or, for a feature
+  marked `"mode": "tutor"`, to the `tutor` (it teaches; the human writes the
+  code). Reviews go to `validator`; specs go to `spec_creator`.
 - **Do not mark a feature `done` yourself.** Only the `validator`'s APPROVED
   verdict closes a feature.
 - **For full-lane features, never skip the human approval gate.** After

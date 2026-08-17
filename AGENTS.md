@@ -57,6 +57,47 @@ pending -> spec_ready -> [HUMAN APPROVAL] -> in_progress -> done
 - **CHANGES_REQUESTED** → spawn `coder` again with the review.
 - **Blocked** → `blocked`, record open question, ask human.
 
+### Human-facing summaries (full lane)
+
+Two files in `specs/<id>/` are written for the **human**, ~1 screen each:
+
+- `brief.md` — by `spec_creator`, before the approval gate. Applies the bundled
+  `no-ai-slop` skill; Mermaid diagram + "what changes" table instead of prose.
+- `walkthrough.md` — by `validator`, after the review. Applies the bundled `bro`
+  skill; real snippets from the diff, explained like a PR walkthrough to a senior.
+
+Views, never sources of truth — spec and code win, the summary gets fixed.
+Light lane skips both unless asked.
+
+### Architecture map
+
+`/arch-map` (bundled skill) generates two committed views of the code:
+`docs/arch-map.json` — `{nodes, edges, flows}`, read by the `spec_creator` in
+place of a broad exploration pass — and `docs/generated/architecture.html`, the
+interactive diagram for humans. Both are **generated**: never hand-edit them,
+source code wins, and the stored commit SHA says how stale they are (`init.sh`
+warns past 20 commits). Re-runs update in place; they never rebuild from scratch.
+
+### Ponytail is on by default
+
+`spec_creator` and `coder` run ponytail (lazy-senior-dev) by default; the skill is
+bundled in `.claude/skills/`, nothing to install. The `validator` reviews
+accordingly: minimal is not a finding. Disable per-task with the literal token
+`ponytail off` in the `Task` prompt.
+
+### Tutor mode (delivery mode, orthogonal to lane)
+
+When a feature carries `"mode": "tutor"`, the **delivery** step uses `tutor`
+instead of `coder`: the human writes the code, the harness teaches and verifies.
+Lane is unchanged (it still decides `spec_creator` + the approval gate).
+
+- **Tutor-mode delivery** → orchestrator sets `in_progress` (the `tutor` cannot) →
+  spawn `tutor` → `tutorial -> progress/tutorial_<id>.md` → **STOP** → [HUMAN writes
+  the code + `progress/impl_<id>.md`] → spawn `validator` (unchanged) → APPROVED →
+  `done`.
+- **CHANGES_REQUESTED** → relay the review; re-spawn `tutor` only if the human wants
+  the concept explained. The `tutor` never edits code or state.
+
 ## Cross-repo order
 
 Backend first, then frontend (code-first → generated typed client). Configured
@@ -64,18 +105,23 @@ in `scope.yaml` per feature; the `order` field is authoritative.
 
 ## Model & effort tiering
 
-Heavy reasoning (orchestration, spec authoring, review) runs on Opus; mechanical
-implementation runs on Sonnet to control token cost. The deliberate split:
+Orchestration, spec authoring, and teaching (heaviest reasoning) run on Opus 5;
+review and mechanical implementation run on Sonnet to control token cost.
+The deliberate split:
 
 | Agent | Model | Effort |
 |---|---|---|
-| `orchestrator` (main session) | Opus 4.8 | high |
-| `spec_creator` | Opus 4.8 | high |
-| `coder` | Sonnet 4.6 | medium |
-| `validator` | Opus 4.8 | high |
+| `orchestrator` (main session) | Opus 5 | medium |
+| `spec_creator` | Opus 5 | high |
+| `coder` | Sonnet 5 | medium |
+| `tutor` (tutor mode) | Opus 5 | high |
+| `validator` | Sonnet 5 | medium |
 
+- `tutor` replaces `coder` when a feature sets `mode: tutor`: it produces a learning
+  tutorial and the human writes the code. Teaching is the heaviest reasoning, so it
+  stays on Opus at high effort.
 - The **orchestrator's tier is set at launch** via `./run.sh` (it exports
-  `CLAUDE_CODE_EFFORT_LEVEL=high` and launches `claude --model opus`). Its
+  `CLAUDE_CODE_EFFORT_LEVEL=medium` and launches `claude --model claude-opus-5`). Its
   frontmatter stays `model: inherit`.
 - **Per-agent tiers live in each agent's frontmatter** (`model:` + `effort:`).
 - **Never set `CLAUDE_CODE_SUBAGENT_MODEL`** — it forces ALL subagents to a

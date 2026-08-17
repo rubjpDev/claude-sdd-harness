@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat); [ \"$(echo \"$INPUT\" | jq -r '.stop_hook_active')\" = \"true\" ] && exit 0; cd \"$CLAUDE_PROJECT_DIR\" && ./init.sh > /tmp/rjp_harness_init.log 2>&1 && echo '[harness] init.sh OK' || (echo '[harness] init.sh FAILED — see /tmp/rjp_harness_init.log' && tail -20 /tmp/rjp_harness_init.log && exit 2)",
+            "command": "INPUT=$(cat); ACTIVE=$(printf '%s' \"$INPUT\" | tr -d '\\000-\\037' | jq -r '.stop_hook_active // empty' 2>/dev/null); [ \"$ACTIVE\" = \"true\" ] && exit 0; cd \"$CLAUDE_PROJECT_DIR\" || exit 0; STATUS=$(jq -r '.status // \"idle\"' progress/active.json 2>/dev/null || echo idle); if ./init.sh > /tmp/rjp_harness_init.log 2>&1; then echo '[harness] init.sh OK'; exit 0; fi; if [ \"$STATUS\" = \"in_progress\" ]; then echo '[harness] gate RED — expected mid-implementation (feature in_progress); see /tmp/rjp_harness_init.log'; exit 0; fi; echo '[harness] init.sh FAILED — see /tmp/rjp_harness_init.log'; tail -20 /tmp/rjp_harness_init.log; exit 2",
             "timeout": 180
           }
         ]
