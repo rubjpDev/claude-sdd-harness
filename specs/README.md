@@ -30,9 +30,36 @@ Both are **views**, never a source of truth: if a summary disagrees with the spe
 or the code, the spec/code wins and the summary is corrected. Both skills ship
 bundled in `.claude/skills/` — nothing to install.
 
-`<feature-id>` is the stable slug used everywhere (e.g. `proj-0001-user-auth`).
+`<feature-id>` is the stable slug used everywhere — your ticket id is the natural
+choice (e.g. `G-1000`, `proj-0001-user-auth`).
 The `spec_creator` writes these from the `templates/`. The folder is the
 **source of truth** for the feature.
+
+## Incidents
+
+An incident gets its own folder too, named after the ticket id:
+
+```
+specs/<incident-id>/                    # e.g. specs/INC-I303/
+  diagnosis-<incident-id>.md            # the triage agent's contract: repro, root
+                                        # cause, blast radius, regression test
+  post-mortem-<incident-id>.md          # HUMAN write-up, after the review
+```
+
+The diagnosis is to an incident what the spec is to a feature: **the contract the
+coder implements against**. It is written before any code, by `triage`, and it is
+the source of truth for what "fixed" means.
+
+The post-mortem replaces `walkthrough.md` for incidents — same `bro` styling and
+real snippets, post-mortem shape: what broke, why, what stops it now, a timeline,
+what data was affected, and what would have caught it earlier. Both files carry the
+incident id in the filename because you end up with several open at once.
+
+If `triage` returns `escalate`, the `spec_creator` writes the four spec files into
+this **same** folder, next to the diagnosis.
+
+**No production data in either file.** These are committed: internal ids only, never
+names, emails, account names, card numbers or tokens.
 
 ## Light-lane features
 

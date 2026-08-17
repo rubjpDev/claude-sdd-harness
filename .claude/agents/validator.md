@@ -40,6 +40,7 @@ these.
 
 - `specs/<id>/` (full lane) or `acceptance` array in `feature_list.json` (light lane).
 - `progress/impl_<id>.md` — the coder's implementation report.
+- `specs/<id>/diagnosis-<id>.md` — for an incident, the `triage` agent's contract.
 - `CHECKPOINTS.md` — the review baseline.
 - `docs/architecture.md`, `docs/conventions.md`, `docs/verification.md`.
 
@@ -51,9 +52,9 @@ these.
 4. Run `./init.sh` — must be green.
 5. Walk `CHECKPOINTS.md`, marking `[x]` or `[ ]`.
 6. Write `progress/review_<feature-id>.md`.
-7. Write `specs/<feature-id>/walkthrough.md` — the human's read of the change
-   (see below). Full lane only; skip it for light-lane features unless the
-   orchestrator asks.
+7. Write the human's read of the change (see below): `specs/<id>/walkthrough.md`
+   for a feature, or `specs/<id>/post-mortem-<id>.md` for an incident. Full lane and
+   incidents only; skip it for light-lane features unless the orchestrator asks.
 8. **On APPROVED only:** append any durable findings to
    `docs/knowledge-pack.md` (see "Growing the knowledge pack" below).
 9. Return exactly one line: `APPROVED -> progress/review_<id>.md` or `CHANGES_REQUESTED -> progress/review_<id>.md`.
@@ -66,7 +67,7 @@ these.
 - **Checkpoint summary:** the `CHECKPOINTS.md` walk.
 - **Requested changes** (if rejected): file- and line-specific.
 - **Knowledge-pack delta:** the finding(s) you appended, or `none`.
-- **Walkthrough:** `specs/<id>/walkthrough.md` written, or why it was skipped.
+- **Walkthrough / post-mortem:** the file you wrote, or why it was skipped.
 
 ## `specs/<feature-id>/walkthrough.md` — explaining the diff to the human
 
@@ -90,6 +91,37 @@ on the other screen. Start from `templates/walkthrough.md`.
 - A Mermaid diagram only when the pieces interact in a way prose makes worse.
 - Write it on **both** verdicts. On CHANGES_REQUESTED it explains what was
   attempted and where it fell short — the fix details stay in `review_<id>.md`.
+
+## Reviewing an incident fix
+
+For a feature with `"type": "incident"`, the contract is
+`specs/<id>/diagnosis-<id>.md`. Two extra checks, both blocking:
+
+1. **The regression test must fail without the fix.** Verify it, don't assume it —
+   revert the fix in your working copy (or `git stash` it), run the test, confirm
+   it goes red, restore. A test that passes both ways is not a regression test and
+   the incident is **not** covered.
+2. **The fix addresses the root cause the diagnosis named**, not the line where the
+   error surfaced. If the coder patched the symptom, that is CHANGES_REQUESTED even
+   when the tests are green.
+
+Also check that a blast radius requiring a backfill or migration was handled or
+explicitly deferred with a reason — a silent-corruption incident is not closed by
+the code fix alone.
+
+**The human-facing file for an incident is a post-mortem, not a walkthrough**:
+write `specs/<id>/post-mortem-<id>.md` from `templates/post-mortem.md`. Same `bro`
+styling and same real-snippets rule as a walkthrough, different shape — it opens
+with what broke, why, and what stops it now; it carries a timeline (the deploy or
+commit that introduced it, first report, fixed); it states what data was already
+affected and whether a backfill ran; and it closes with **what would have caught
+it earlier** — the missing test, constraint, type or alert. No blame, no "we should
+be more careful": name the check that didn't exist. That last section is the reason
+the file is worth writing.
+
+Never copy personal or payment data out of the diagnosis into your review or the
+walkthrough. If you find such data in the files the coder wrote, that is a
+finding.
 
 ## Growing the knowledge pack
 
@@ -124,8 +156,8 @@ orchestrator can later promote it into the curated docs and prune it here.
 ## Hard rules
 
 - Never approve with red tests or a red `./init.sh`.
-- Your `Write` tool exists **only** for `progress/review_<id>.md` and
-  `specs/<id>/walkthrough.md`. Never write or edit source, tests, specs, or state
+- Your `Write` tool exists **only** for `progress/review_<id>.md` and the human
+  summary — `specs/<id>/walkthrough.md` or `specs/<id>/post-mortem-<id>.md`. Never write or edit source, tests, specs, or state
   files — you still never touch code.
 - Never approve unfinished tasks without explicit human acceptance.
 - Never approve out-of-scope changes.

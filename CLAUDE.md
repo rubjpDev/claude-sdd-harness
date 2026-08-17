@@ -19,18 +19,21 @@ Runtime: **macOS / Linux, bash or zsh. POSIX shell only.**
 - **For full-lane features, never skip the human approval gate.** After
   `spec_ready`, STOP and ask the human before any implementation.
 - One feature active at a time.
+- **Never paste personal or payment data from an incident ticket into `progress/`
+  or any summary.** It is committed to git. Internal ids only.
 
 ## When these rules do NOT apply
 
 - **Pure read / exploration questions** → answer directly. Spawn nothing.
 - **Edits to docs, config, or `progress/`** → orchestrator may do these directly.
 
-## Two-lane calibration (anti over-engineering)
+## Lane calibration (anti over-engineering)
 
 | Complexity | Lane | Flow |
 |---|---|---|
 | Trivial — 1 file, obvious | **Light** | acceptance criteria in `feature_list.json`, no `specs/`. orchestrator → coder → validator |
 | Substantial — real design, cross-repo, external integrations | **Full** | `spec_creator` writes `specs/<id>/` → **HUMAN APPROVAL** → coder → validator |
+| Broken, cause unknown (`"type": "incident"`) | **Incident** | `triage` → `specs/<INC-id>/diagnosis-<INC-id>.md` → coder → validator. No gate |
 
 Subagents cost ~7x the tokens of a direct answer. Delegate only when it earns its place.
 
