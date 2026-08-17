@@ -89,6 +89,7 @@ The harness is a **standalone repo**, a sibling of the repos it coordinates:
 │   │   │   ├── orchestrator.md
 │   │   │   ├── spec_creator.md
 │   │   │   ├── coder.md
+│   │   │   ├── triage.md   ← incident lane: diagnoses, never fixes
 │   │   │   ├── tutor.md    ← optional: teaches instead of coding
 │   │   │   └── validator.md
 │   │   ├── skills/         ← vendored skills (ponytail, no-ai-slop, bro, arch-map)
@@ -159,6 +160,7 @@ frontmatter + system prompt). The orchestrator spawns the others with the
 | **orchestrator** | the main session (pinned by `CLAUDE.md`) | ❌ | ❌ | — |
 | **spec_creator** | `Task` → spec_creator | ❌ (writes specs only) | ❌ | `spec_ready -> specs/<id>/` |
 | **coder** | `Task` → coder | ✅ | ❌ (hands back) | `done -> progress/impl_<id>.md` |
+| **triage** *(incident lane)* | `Task` → triage | ❌ (diagnoses only) | ❌ | `diagnosed -> specs/<id>/diagnosis-<id>.md` |
 | **tutor** *(tutor mode)* | `Task` → tutor | ❌ (the human writes it) | ❌ | `tutorial -> progress/tutorial_<id>.md` |
 | **validator** | `Task` → validator | ❌ | ✅ (APPROVED closes) | `APPROVED -> progress/review_<id>.md` |
 
@@ -388,12 +390,14 @@ list prices**. A model seen in the data but missing from the table is counted as
 | `.claude/agents/orchestrator.md` | Coordinator role (the pinned main session). |
 | `.claude/agents/spec_creator.md` | Writes `specs/<id>/` for full-lane features. |
 | `.claude/agents/coder.md` | Implements one feature with tests. |
+| `.claude/agents/triage.md` | Incident lane: reproduces, finds the root cause, prescribes the regression test. |
 | `.claude/agents/tutor.md` | Tutor mode: teaches one feature so the human implements it. |
 | `.claude/agents/validator.md` | Reviews and emits APPROVED / CHANGES_REQUESTED. |
 | `.claude/skills/` | Vendored skills, usable without installing plugins — see its README. |
 | `CHANGELOG.md` | What changed in each version, and why. |
 | `templates/brief.md` | Skeleton for the human-facing spec summary. |
 | `templates/walkthrough.md` | Skeleton for the human-facing change walkthrough. |
+| `templates/post-mortem.md` | Skeleton for the human-facing incident post-mortem. |
 | `docs/arch-map.json` | Generated `{nodes, edges, flows}` map of the code, for agents. |
 | `docs/generated/architecture.html` | Generated interactive architecture diagram, for humans. |
 | `.claude/settings.json` | PostToolUse + Stop hooks; permission allow-list. |
@@ -497,7 +501,7 @@ distinction into a named two-lane system with acceptance criteria, and adds:
   `init.sh` check, on top of Bettatech's original hooks.
 - Renamed roles, MIT license, and expanded documentation.
 
-### v3-extended
+### v3-extended / v3.1
 
 Built on v2, same author. See `CHANGELOG.md` for the full entry.
 
@@ -524,6 +528,20 @@ Built on v2, same author. See `CHANGELOG.md` for the full entry.
   incrementally** from the commit SHA stored in the JSON — a re-run after three
   commits edits three nodes, it doesn't rebuild the map. `init.sh` warns when the
   map drifts more than 20 commits behind.
+- **Incident lane** — a feature marked `"type": "incident"` goes through the new
+  `triage` agent first: it reproduces the failure, traces the root cause to
+  `file:line`, establishes the blast radius and prescribes the regression test into
+  `specs/<incident-id>/diagnosis-<incident-id>.md` — an incident gets its own folder
+  under `specs/` named after the ticket id, and the diagnosis is to an incident what
+  the spec is to a feature: the contract, written before any code. It fixes nothing
+  and changes no state. Diagnosis is search-heavy, so it runs in its own context and
+  the coder gets a clean window for the fix. `escalate` converts an incident whose
+  cause is a design problem into a full-lane feature with the human gate;
+  `cannot_reproduce` is a legitimate outcome, not a failure. The coder writes the
+  regression test **first and watches it fail**; the validator verifies it really
+  goes red without the fix and writes `post-mortem-<id>.md` instead of a walkthrough
+  — closing with what would have caught the bug earlier. Ticket data (names, cards, account ids) never enters
+  the committed `progress/` files.
 - **Tutor mode** — a feature marked `"mode": "tutor"` in `feature_list.json` is
   delivered by the `tutor` instead of the `coder`: it writes
   `progress/tutorial_<id>.md`, the human writes the code, and the `validator`

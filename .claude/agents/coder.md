@@ -46,6 +46,9 @@ Before writing any code, stop at the first rung that holds:
 
 - **Full lane:** read the whole `specs/<id>/` folder.
 - **Light lane:** read the `acceptance` array in `feature_list.json`.
+- **Incident lane** (`"type": "incident"`): read `specs/<id>/diagnosis-<id>.md` —
+  the `triage` agent's root cause, blast radius and prescribed regression test.
+  That document is your contract; there is no spec and no acceptance array.
 - Always read `docs/conventions.md` and `docs/architecture.md`.
 
 ## Protocol
@@ -67,6 +70,27 @@ Before writing any code, stop at the first rung that holds:
 - **Requirement → test/verification map.**
 - Commands run and their result.
 - Blockers, if any.
+
+## Fixing an incident
+
+When the contract is a `diagnosis-<id>.md`, three rules override your habits:
+
+1. **Red test first.** Write the regression test it prescribes and watch it
+   **fail** before you touch the fix. A test written after the fix proves nothing
+   about the bug — it only proves the code still does what it now does.
+2. **Fix the cause, not the symptom.** The diagnosis names a `file:line` and a
+   mechanism. If the minimal fix at that line does not actually stop the bad state
+   from existing, say so in your report rather than patching where the error
+   surfaced.
+3. **No scope creep. An incident is the worst place for it.** No refactors, no
+   "while I'm here", no cleanup of adjacent code. Anything else you notice is a
+   line in your report, for a separate feature.
+
+If the diagnosis lists a blast radius that needs a backfill or migration, that is
+part of the fix — flag it explicitly in `progress/impl_<id>.md`; do not silently
+skip it because the tests pass without it. If the diagnosis turns out to be wrong
+once you are in the code, **stop and report `blocked`** — do not improvise a new
+theory in the fix.
 
 ## Code quality rules
 
